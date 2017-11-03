@@ -1,0 +1,5 @@
+/home/archemi/Projects/clsoc/clsoc/obj/x86/Debug/.NETFramework,Version=v4.5.AssemblyAttribute.cs
+/home/archemi/Projects/clsoc/clsoc/bin/Debug/clsoc.exe.mdb
+/home/archemi/Projects/clsoc/clsoc/bin/Debug/clsoc.exe
+/home/archemi/Projects/clsoc/clsoc/obj/x86/Debug/clsoc.exe
+/home/archemi/Projects/clsoc/clsoc/obj/x86/Debug/clsoc.exe.mdb
