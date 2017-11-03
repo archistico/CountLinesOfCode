@@ -1,0 +1,3 @@
+/home/archemi/Projects/clsoc/clsoc/obj/x86/Release/.NETFramework,Version=v4.5.AssemblyAttribute.cs
+/home/archemi/Projects/clsoc/clsoc/bin/Release/clsoc.exe
+/home/archemi/Projects/clsoc/clsoc/obj/x86/Release/clsoc.exe
