@@ -6,7 +6,8 @@ namespace clsoc
 	{
 		public static void Main(string[] args)
 		{
-			
+			Contatore cont = new Contatore();
+			cont.Conteggia();
 		}
 	}
 }
