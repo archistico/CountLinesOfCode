@@ -98,6 +98,7 @@ internal static class Program
         Console.WriteLine("  clsoc count . --format markdown");
         Console.WriteLine("  clsoc count . --format csv");
         Console.WriteLine("  clsoc count . --format json --output report.json");
+        Console.WriteLine("  clsoc count . --config clsoc.json");
     }
 
     private sealed class CountOptions
@@ -137,18 +138,27 @@ internal static class Program
         public static CountOptions Parse(string[] args)
         {
             string rootPath = Environment.CurrentDirectory;
+            bool rootPathSetByCli = false;
             List<string> languageIds = new();
             List<string> extensions = new();
+            bool languagesSetByCli = false;
+            bool extensionsSetByCli = false;
             bool showHelp = false;
             bool useDefaultExcludes = true;
+            bool useDefaultExcludesSetByCli = false;
             List<string> excludedDirectoryNames = new();
+            bool excludedDirectoryNamesSetByCli = false;
             ReportFormat outputFormat = ReportFormat.Table;
+            bool outputFormatSetByCli = false;
             string? outputPath = null;
+            bool outputPathSetByCli = false;
+            string? configPath = null;
 
             int index = 0;
             if (index < args.Length && !args[index].StartsWith("--", StringComparison.Ordinal))
             {
                 rootPath = args[index];
+                rootPathSetByCli = true;
                 index++;
             }
 
@@ -167,21 +177,27 @@ internal static class Program
 
                 if (string.Equals(option, "--lang", StringComparison.OrdinalIgnoreCase) && value is not null)
                 {
+                    languageIds.Clear();
                     languageIds.AddRange(SplitList(value));
+                    languagesSetByCli = true;
                     index += 2;
                     continue;
                 }
 
                 if (string.Equals(option, "--ext", StringComparison.OrdinalIgnoreCase) && value is not null)
                 {
+                    extensions.Clear();
                     extensions.AddRange(SplitList(value));
+                    extensionsSetByCli = true;
                     index += 2;
                     continue;
                 }
 
                 if (string.Equals(option, "--exclude", StringComparison.OrdinalIgnoreCase) && value is not null)
                 {
+                    excludedDirectoryNames.Clear();
                     excludedDirectoryNames.AddRange(SplitList(value));
+                    excludedDirectoryNamesSetByCli = true;
                     index += 2;
                     continue;
                 }
@@ -189,6 +205,7 @@ internal static class Program
                 if (string.Equals(option, "--no-default-excludes", StringComparison.OrdinalIgnoreCase))
                 {
                     useDefaultExcludes = false;
+                    useDefaultExcludesSetByCli = true;
                     index++;
                     continue;
                 }
@@ -198,6 +215,7 @@ internal static class Program
                     if (ReportFormatParser.TryParse(value, out ReportFormat parsedFormat))
                     {
                         outputFormat = parsedFormat;
+                        outputFormatSetByCli = true;
                     }
 
                     index += 2;
@@ -207,11 +225,60 @@ internal static class Program
                 if (string.Equals(option, "--output", StringComparison.OrdinalIgnoreCase) && value is not null)
                 {
                     outputPath = value;
+                    outputPathSetByCli = true;
+                    index += 2;
+                    continue;
+                }
+
+                if (string.Equals(option, "--config", StringComparison.OrdinalIgnoreCase) && value is not null)
+                {
+                    configPath = value;
                     index += 2;
                     continue;
                 }
 
                 index++;
+            }
+
+            CountConfiguration? configuration = new CountConfigurationLoader().LoadIfExists(rootPath, configPath);
+            if (configuration is not null)
+            {
+                if (!rootPathSetByCli && !string.IsNullOrWhiteSpace(configuration.RootPath))
+                {
+                    rootPath = configuration.RootPath;
+                }
+
+                if (!languagesSetByCli && configuration.Languages is not null)
+                {
+                    languageIds = ToList(configuration.Languages);
+                }
+
+                if (!extensionsSetByCli && configuration.Extensions is not null)
+                {
+                    extensions = ToList(configuration.Extensions);
+                }
+
+                if (!excludedDirectoryNamesSetByCli && configuration.ExcludeDirectories is not null)
+                {
+                    excludedDirectoryNames = ToList(configuration.ExcludeDirectories);
+                }
+
+                if (!useDefaultExcludesSetByCli && configuration.UseDefaultExcludes.HasValue)
+                {
+                    useDefaultExcludes = configuration.UseDefaultExcludes.Value;
+                }
+
+                if (!outputFormatSetByCli
+                    && !string.IsNullOrWhiteSpace(configuration.OutputFormat)
+                    && ReportFormatParser.TryParse(configuration.OutputFormat, out ReportFormat parsedFormat))
+                {
+                    outputFormat = parsedFormat;
+                }
+
+                if (!outputPathSetByCli && !string.IsNullOrWhiteSpace(configuration.OutputPath))
+                {
+                    outputPath = configuration.OutputPath;
+                }
             }
 
             return new CountOptions(
@@ -229,6 +296,14 @@ internal static class Program
             return value
                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .Where(item => item.Length > 0);
+        }
+
+        private static List<string> ToList(IEnumerable<string> values)
+        {
+            return values
+                .Where(value => !string.IsNullOrWhiteSpace(value))
+                .Select(value => value.Trim())
+                .ToList();
         }
     }
 }

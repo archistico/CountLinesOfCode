@@ -42,6 +42,7 @@ clsoc count . --format json
 clsoc count . --format markdown
 clsoc count . --format csv
 clsoc count . --format json --output report.json
+clsoc count . --config clsoc.json
 ```
 
 The output is grouped by language and now includes a small metrics section:
@@ -157,6 +158,52 @@ clsoc count . --format csv --output report.csv
 - Largest file: src/Program.cs (98 lines)
 ```
 
+## Configuration file
+
+You can place an optional `clsoc.json` file in the root directory passed to `clsoc count`.
+
+```bash
+clsoc count .
+```
+
+When `./clsoc.json` exists, it is loaded automatically. You can also pass a specific configuration file:
+
+```bash
+clsoc count . --config path/to/clsoc.json
+```
+
+Example:
+
+```json
+{
+  "languages": [
+    "csharp",
+    "xml"
+  ],
+  "excludeDirectories": [
+    "generated",
+    "temp"
+  ],
+  "useDefaultExcludes": true,
+  "outputFormat": "markdown",
+  "outputPath": "report.md"
+}
+```
+
+Supported properties:
+
+| Property | Meaning |
+|---|---|
+| `rootPath` | Optional default root path to scan when no path is passed in the CLI. |
+| `languages` | Language ids such as `csharp`, `xml`, `python`, `sql`. |
+| `extensions` | Extension filters such as `cs`, `xaml`, `xml`. |
+| `excludeDirectories` | Additional directory names to skip. |
+| `useDefaultExcludes` | Enables or disables the default excluded directories. |
+| `outputFormat` | `table`, `json`, `markdown`, `md` or `csv`. |
+| `outputPath` | Optional report output path. |
+
+CLI options override the configuration file. For example, if `clsoc.json` uses `markdown` but you run `--format json`, the CLI value wins.
+
 ## Default excluded directories
 
 By default, the recursive scan ignores directories that usually contain generated, restored, build or tooling files:
@@ -220,6 +267,9 @@ src/
       LineCounter.cs
       LineCountResult.cs
       ProjectCounter.cs
+    Configuration/
+      CountConfiguration.cs
+      CountConfigurationLoader.cs
     Reporting/
       CountReportFormatter.cs
       ReportFormat.cs
@@ -232,6 +282,7 @@ tests/
     LanguageRegistryTests.cs
     LineCounterTests.cs
     ProjectCounterTests.cs
+    CountConfigurationLoaderTests.cs
     CountReportFormatterTests.cs
 ```
 
@@ -251,5 +302,5 @@ Mixed code/comment lines are still counted as code lines, preserving the current
 - [x] Add default excluded directories such as `bin`, `obj`, `.git`, `.vs`, `node_modules`
 - [x] Add output formats: table, JSON, Markdown, CSV
 - [x] Add summary metrics: ratios, average lines per file and largest file
-- [ ] Add optional configuration file `clsoc.json`
+- [x] Add optional configuration file `clsoc.json`
 - [ ] Package as a .NET global tool
