@@ -1,12 +1,8 @@
-# CountLinesOfCode
+# clsoc - Count Lines Of Code
 
-Small command line utility that counts lines of code for files with a selected extension.
+`clsoc` is a small command line tool for counting lines of code.
 
-This repository is being modernized incrementally. The current version targets .NET 8, has baseline tests, separates the core counting logic from the console executable, and includes a more robust C-like comment parser.
-
-## Requirements
-
-- .NET 8 SDK
+The project has been modernized to .NET 8 and split into a console frontend plus a testable core library.
 
 ## Build
 
@@ -20,80 +16,93 @@ dotnet build clsoc.sln
 dotnet test clsoc.sln
 ```
 
-## Use
+## Legacy usage
 
-From the folder you want to analyze:
+The original command style is still supported:
 
 ```bash
-dotnet run --project clsoc -- cs
+clsoc cs
 ```
 
-The argument is the file extension to analyze. Both `cs` and `.cs` are accepted.
+This scans the current directory recursively and counts files with the selected extension.
 
-Current output:
+## New usage
 
-```text
-Numero file     : 0
-Linee totali    : 0
------------------------
-Linee di codice : 0
-Linee vuote     : 0
-Linee commenti  : 0
+The new command style is closer to the final CLI target:
+
+```bash
+clsoc count .
+clsoc count . --lang csharp
+clsoc count . --lang csharp,xml
+clsoc count . --ext cs,xaml,xml
 ```
 
-## Project structure
+The output is grouped by language:
 
 ```text
-clsoc.sln
+Language                 Files      Code  Comments     Blank     Total
+-----------------------------------------------------------------------
+C#                           4       120        12        20       152
+XML/XAML                     2        35         3         6        44
+-----------------------------------------------------------------------
+Total                        6       155        15        26       196
+```
+
+## Supported languages in this phase
+
+| Language | Extensions | Line comments | Block comments |
+|---|---|---|---|
+| C# | `.cs` | `//` | `/* */` |
+| VB.NET | `.vb` | `'` | - |
+| JavaScript/TypeScript | `.js`, `.jsx`, `.ts`, `.tsx` | `//` | `/* */` |
+| CSS | `.css`, `.scss`, `.sass`, `.less` | - | `/* */` |
+| Python | `.py` | `#` | - |
+| SQL | `.sql` | `--` | `/* */` |
+| XML/XAML | `.xml`, `.xaml`, `.csproj`, `.props`, `.targets`, `.config` | - | `<!-- -->` |
+| HTML | `.html`, `.htm` | - | `<!-- -->` |
+
+## Current architecture
+
+```text
 clsoc/
-  clsoc.csproj                 Console executable
-  Program.cs                   CLI entry point
+  Program.cs
+  clsoc.csproj
+
 src/
   clsoc.Core/
-    clsoc.Core.csproj          Core library
     Counting/
-      Contatore.cs             Backward-compatible facade
-      FileScanner.cs           File discovery
-      LineCounter.cs           Single-file line counter
-      LineCountResult.cs       Count result model
+      CommentBlockDefinition.cs
+      Contatore.cs
+      FileScanner.cs
+      LanguageCountResult.cs
+      LanguageDefinition.cs
+      LanguageRegistry.cs
+      LineCounter.cs
+      LineCountResult.cs
+      ProjectCounter.cs
+
 tests/
   clsoc.Tests/
     ContatoreTests.cs
+    LanguageRegistryTests.cs
     LineCounterTests.cs
+    ProjectCounterTests.cs
 ```
 
-`Contatore` is still available for compatibility with the original code and tests, but the real work is now delegated to smaller classes. This prepares the next phases: parser correction, language definitions, exclusions, and richer output formats.
+## Notes
 
-## Current parser behavior
+The parser is now language-aware, but it is still intentionally lightweight. It is not a full compiler parser.
 
-The counter now uses a character-by-character parser for C-like comments. It handles:
-
-- single-line comments with `//`
-- legacy VB-style single-line comments with `'` when the line starts as a comment
-- block comments with `/* ... */`
-- block comments that open and close on the same line
-- inline block comments inside code lines
-- comment markers inside normal string literals
-- simple C# verbatim strings such as `@"..."`
-
-The current reporting model still assigns each physical line to one primary category. A line containing both code and a comment is counted as a code line, preserving the original public counters.
-
-## Current limitations
-
-Some planned features are still intentionally missing:
-
-- language-specific comment definitions
-- separate reporting for mixed code/comment lines
-- raw C# string literal support
-- generated/build folder exclusions such as `bin`, `obj`, `.git`, `node_modules`
-- richer output formats and configuration
+Mixed code/comment lines are still counted as code lines, preserving the current counting model.
 
 ## Roadmap
 
-1. Modernize project and add baseline tests — done
-2. Separate core counting logic from CLI output — done
-3. Improve comment parsing — done for C-like baseline cases
-4. Add language definitions
-5. Add directory exclusions and configuration
-6. Add table, JSON, Markdown and CSV output
-7. Package as a .NET global tool
+- [x] Migrate to .NET 8
+- [x] Add baseline tests
+- [x] Split Core and CLI
+- [x] Improve C-like comment parsing
+- [x] Add language definitions and grouped language counting
+- [ ] Add default excluded directories such as `bin`, `obj`, `.git`, `.vs`, `node_modules`
+- [ ] Add output formats: table, JSON, Markdown, CSV
+- [ ] Add optional configuration file `clsoc.json`
+- [ ] Package as a .NET global tool

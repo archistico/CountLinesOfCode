@@ -47,11 +47,23 @@ public class Contatore
             summary = summary.Add(this.lineCounter.CountFile(file));
         }
 
-        this.numberOfFile = files.Count;
-        this.linesOfcodeTotal = summary.TotalLines;
-        this.linesOfCode = summary.CodeLines;
-        this.linesOfcodeEmpty = summary.BlankLines;
-        this.linesOfcodeComment = summary.CommentLines;
+        this.Apply(summary, files.Count);
+    }
+
+    public void ConteggiaLinguaggio(LanguageDefinition language, string rootPath)
+    {
+        ArgumentNullException.ThrowIfNull(language);
+        this.Reset();
+
+        IReadOnlyList<string> files = this.fileScanner.FindFiles(rootPath, language.Extensions);
+        LineCountResult summary = LineCountResult.Empty;
+
+        foreach (string file in files)
+        {
+            summary = summary.Add(this.lineCounter.CountFile(file, language));
+        }
+
+        this.Apply(summary, files.Count);
     }
 
     public void MostraRisultati()
@@ -62,6 +74,15 @@ public class Contatore
         Console.WriteLine("Linee di codice : " + this.linesOfCode.ToString());
         Console.WriteLine("Linee vuote     : " + this.linesOfcodeEmpty.ToString());
         Console.WriteLine("Linee commenti  : " + this.linesOfcodeComment.ToString());
+    }
+
+    private void Apply(LineCountResult summary, int fileCount)
+    {
+        this.numberOfFile = fileCount;
+        this.linesOfcodeTotal = summary.TotalLines;
+        this.linesOfCode = summary.CodeLines;
+        this.linesOfcodeEmpty = summary.BlankLines;
+        this.linesOfcodeComment = summary.CommentLines;
     }
 
     private void Reset()

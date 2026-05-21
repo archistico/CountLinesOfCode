@@ -135,6 +135,59 @@ public sealed class LineCounterTests : IDisposable
         Assert.Equal(0, result.BlankLines);
     }
 
+
+    [Fact]
+    public void CountFile_WithCSharpLanguage_ShouldNotTreatApostropheAsComment()
+    {
+        string file = this.WriteFile("Program.cs", "string text = \"it's code\";");
+        LineCounter counter = new();
+
+        LineCountResult result = counter.CountFile(file, LanguageRegistry.CSharp);
+
+        Assert.Equal(1, result.TotalLines);
+        Assert.Equal(1, result.CodeLines);
+        Assert.Equal(0, result.CommentLines);
+    }
+
+    [Fact]
+    public void CountFile_WithXmlLanguage_ShouldCountXmlComments()
+    {
+        string file = this.WriteFile("View.xaml", "<!-- comment -->", "<Grid />");
+        LineCounter counter = new();
+
+        LineCountResult result = counter.CountFile(file, LanguageRegistry.Xml);
+
+        Assert.Equal(2, result.TotalLines);
+        Assert.Equal(1, result.CodeLines);
+        Assert.Equal(1, result.CommentLines);
+    }
+
+    [Fact]
+    public void CountFile_WithSqlLanguage_ShouldCountDashDashComments()
+    {
+        string file = this.WriteFile("script.sql", "-- comment", "select 1;");
+        LineCounter counter = new();
+
+        LineCountResult result = counter.CountFile(file, LanguageRegistry.Sql);
+
+        Assert.Equal(2, result.TotalLines);
+        Assert.Equal(1, result.CodeLines);
+        Assert.Equal(1, result.CommentLines);
+    }
+
+    [Fact]
+    public void CountFile_WithPythonLanguage_ShouldCountHashComments()
+    {
+        string file = this.WriteFile("script.py", "# comment", "print('hello')");
+        LineCounter counter = new();
+
+        LineCountResult result = counter.CountFile(file, LanguageRegistry.Python);
+
+        Assert.Equal(2, result.TotalLines);
+        Assert.Equal(1, result.CodeLines);
+        Assert.Equal(1, result.CommentLines);
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(this.testRoot))

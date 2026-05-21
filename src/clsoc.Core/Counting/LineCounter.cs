@@ -4,9 +4,15 @@ public sealed class LineCounter
 {
     public LineCountResult CountFile(string filePath)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+        return this.CountFile(filePath, LanguageRegistry.Legacy);
+    }
 
-        bool isInsideBlockComment = false;
+    public LineCountResult CountFile(string filePath, LanguageDefinition language)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
+        ArgumentNullException.ThrowIfNull(language);
+
+        CommentBlockDefinition? activeBlockComment = null;
         int totalLines = 0;
         int codeLines = 0;
         int blankLines = 0;
@@ -15,7 +21,7 @@ public sealed class LineCounter
         foreach (string rawLine in File.ReadLines(filePath))
         {
             totalLines++;
-            LineClassification classification = ClassifyLine(rawLine, ref isInsideBlockComment);
+            LineClassification classification = ClassifyLine(rawLine, language, ref activeBlockComment);
 
             if (classification.HasCode)
             {
@@ -34,7 +40,10 @@ public sealed class LineCounter
         return new LineCountResult(1, totalLines, codeLines, blankLines, commentLines);
     }
 
-    private static LineClassification ClassifyLine(string line, ref bool isInsideBlockComment)
+    private static LineClassification ClassifyLine(
+        string line,
+        LanguageDefinition language,
+        ref CommentBlockDefinition? activeBlockComment)
     {
         bool hasCode = false;
         bool hasComment = false;
@@ -48,14 +57,14 @@ public sealed class LineCounter
             char current = line[index];
             char? next = index + 1 < line.Length ? line[index + 1] : null;
 
-            if (isInsideBlockComment)
+            if (activeBlockComment is not null)
             {
                 hasComment = true;
 
-                if (current == '*' && next == '/')
+                if (StartsWith(line, index, activeBlockComment.EndToken))
                 {
-                    isInsideBlockComment = false;
-                    index++;
+                    index += activeBlockComment.EndToken.Length - 1;
+                    activeBlockComment = null;
                 }
 
                 continue;
@@ -121,32 +130,29 @@ public sealed class LineCounter
                 continue;
             }
 
-            if (current == '/' && next == '/')
+            CommentBlockDefinition? blockComment = FindBlockCommentAt(line, index, language);
+            if (blockComment is not null)
             {
                 hasComment = true;
-                break;
-            }
-
-            if (current == '/' && next == '*')
-            {
-                hasComment = true;
-                isInsideBlockComment = true;
-                index++;
+                activeBlockComment = blockComment;
+                index += blockComment.StartToken.Length - 1;
                 hasPendingVerbatimPrefix = false;
                 continue;
             }
 
-            if (current == '\'')
+            string? lineCommentToken = FindLineCommentTokenAt(line, index, language);
+            if (lineCommentToken is not null)
             {
-                if (hasCode)
-                {
-                    isInsideChar = true;
-                    hasPendingVerbatimPrefix = false;
-                    continue;
-                }
-
                 hasComment = true;
                 break;
+            }
+
+            if (current == '\'' && !language.LineCommentTokens.Contains("'", StringComparer.Ordinal))
+            {
+                isInsideChar = true;
+                hasCode = true;
+                hasPendingVerbatimPrefix = false;
+                continue;
             }
 
             if (current == '"')
@@ -176,6 +182,22 @@ public sealed class LineCounter
         }
 
         return new LineClassification(hasCode, hasComment);
+    }
+
+    private static CommentBlockDefinition? FindBlockCommentAt(string line, int index, LanguageDefinition language)
+    {
+        return language.BlockComments.FirstOrDefault(blockComment => StartsWith(line, index, blockComment.StartToken));
+    }
+
+    private static string? FindLineCommentTokenAt(string line, int index, LanguageDefinition language)
+    {
+        return language.LineCommentTokens.FirstOrDefault(token => StartsWith(line, index, token));
+    }
+
+    private static bool StartsWith(string text, int startIndex, string token)
+    {
+        return startIndex + token.Length <= text.Length
+            && string.CompareOrdinal(text, startIndex, token, 0, token.Length) == 0;
     }
 
     private readonly record struct LineClassification(bool HasCode, bool HasComment);
