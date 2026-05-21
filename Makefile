@@ -1,7 +1,10 @@
 .PHONY: run build test check clean zip z
 
 run:
-	dotnet run --project clsoc -- cs
+	dotnet run --project clsoc -- count .
+
+r:
+	dotnet run --project clsoc -- count "E:\sviluppo\2026 OpenCad2D"
 
 build:
 	dotnet build clsoc.sln

@@ -18,14 +18,23 @@ public sealed class ProjectCounter
 
     public IReadOnlyList<LanguageCountResult> CountByLanguage(string rootPath, IEnumerable<LanguageDefinition> languages)
     {
+        return this.CountByLanguage(rootPath, languages, FileScanOptions.Default);
+    }
+
+    public IReadOnlyList<LanguageCountResult> CountByLanguage(
+        string rootPath,
+        IEnumerable<LanguageDefinition> languages,
+        FileScanOptions scanOptions)
+    {
         ArgumentException.ThrowIfNullOrWhiteSpace(rootPath);
         ArgumentNullException.ThrowIfNull(languages);
+        ArgumentNullException.ThrowIfNull(scanOptions);
 
         List<LanguageCountResult> results = new();
 
         foreach (LanguageDefinition language in languages)
         {
-            IReadOnlyList<string> files = this.fileScanner.FindFiles(rootPath, language.Extensions);
+            IReadOnlyList<string> files = this.fileScanner.FindFiles(rootPath, language.Extensions, scanOptions);
             LineCountResult summary = LineCountResult.Empty;
 
             foreach (string file in files)
@@ -41,7 +50,12 @@ public sealed class ProjectCounter
 
     public LineCountResult CountTotal(string rootPath, IEnumerable<LanguageDefinition> languages)
     {
-        return this.CountByLanguage(rootPath, languages)
+        return this.CountTotal(rootPath, languages, FileScanOptions.Default);
+    }
+
+    public LineCountResult CountTotal(string rootPath, IEnumerable<LanguageDefinition> languages, FileScanOptions scanOptions)
+    {
+        return this.CountByLanguage(rootPath, languages, scanOptions)
             .Select(result => result.Result)
             .Aggregate(LineCountResult.Empty, (current, next) => current.Add(next));
     }

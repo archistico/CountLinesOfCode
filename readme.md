@@ -35,6 +35,13 @@ clsoc count .
 clsoc count . --lang csharp
 clsoc count . --lang csharp,xml
 clsoc count . --ext cs,xaml,xml
+clsoc count . --exclude generated,temp
+clsoc count . --no-default-excludes
+clsoc count . --format table
+clsoc count . --format json
+clsoc count . --format markdown
+clsoc count . --format csv
+clsoc count . --format json --output report.json
 ```
 
 The output is grouped by language:
@@ -46,6 +53,95 @@ C#                           4       120        12        20       152
 XML/XAML                     2        35         3         6        44
 -----------------------------------------------------------------------
 Total                        6       155        15        26       196
+```
+
+
+
+## Output formats
+
+The default output format is `table`.
+
+```bash
+clsoc count . --format table
+```
+
+You can also generate machine-readable or documentation-friendly reports:
+
+```bash
+clsoc count . --format json
+clsoc count . --format markdown
+clsoc count . --format csv
+```
+
+Reports can be written to a file:
+
+```bash
+clsoc count . --format json --output report.json
+clsoc count . --format markdown --output report.md
+clsoc count . --format csv --output report.csv
+```
+
+### JSON example
+
+```json
+{
+  "languages": [
+    {
+      "id": "csharp",
+      "name": "C#",
+      "files": 4,
+      "code": 120,
+      "comments": 12,
+      "blank": 20,
+      "total": 152
+    }
+  ],
+  "total": {
+    "files": 4,
+    "code": 120,
+    "comments": 12,
+    "blank": 20,
+    "total": 152
+  }
+}
+```
+
+### Markdown example
+
+```markdown
+| Language | Files | Code | Comments | Blank | Total |
+|---|---:|---:|---:|---:|---:|
+| C# | 4 | 120 | 12 | 20 | 152 |
+| **Total** | **4** | **120** | **12** | **20** | **152** |
+```
+
+## Default excluded directories
+
+By default, the recursive scan ignores directories that usually contain generated, restored, build or tooling files:
+
+```text
+.git
+.vs
+bin
+obj
+node_modules
+dist
+build
+packages
+vendor
+coverage
+```
+
+You can add project-specific exclusions:
+
+```bash
+clsoc count . --exclude generated,temp
+```
+
+You can also disable the default exclusions:
+
+```bash
+clsoc count . --no-default-excludes
 ```
 
 ## Supported languages in this phase
@@ -73,6 +169,7 @@ src/
     Counting/
       CommentBlockDefinition.cs
       Contatore.cs
+      FileScanOptions.cs
       FileScanner.cs
       LanguageCountResult.cs
       LanguageDefinition.cs
@@ -80,13 +177,19 @@ src/
       LineCounter.cs
       LineCountResult.cs
       ProjectCounter.cs
+    Reporting/
+      CountReportFormatter.cs
+      ReportFormat.cs
+      ReportFormatParser.cs
 
 tests/
   clsoc.Tests/
     ContatoreTests.cs
+    FileScannerTests.cs
     LanguageRegistryTests.cs
     LineCounterTests.cs
     ProjectCounterTests.cs
+    CountReportFormatterTests.cs
 ```
 
 ## Notes
@@ -102,7 +205,7 @@ Mixed code/comment lines are still counted as code lines, preserving the current
 - [x] Split Core and CLI
 - [x] Improve C-like comment parsing
 - [x] Add language definitions and grouped language counting
-- [ ] Add default excluded directories such as `bin`, `obj`, `.git`, `.vs`, `node_modules`
-- [ ] Add output formats: table, JSON, Markdown, CSV
+- [x] Add default excluded directories such as `bin`, `obj`, `.git`, `.vs`, `node_modules`
+- [x] Add output formats: table, JSON, Markdown, CSV
 - [ ] Add optional configuration file `clsoc.json`
 - [ ] Package as a .NET global tool

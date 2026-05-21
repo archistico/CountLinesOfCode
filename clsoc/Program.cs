@@ -32,8 +32,26 @@ internal static class Program
         }
 
         ProjectCounter counter = new();
-        IReadOnlyList<LanguageCountResult> results = counter.CountByLanguage(options.RootPath, languages);
-        PrintResults(results);
+        IReadOnlyList<LanguageCountResult> results = counter.CountByLanguage(options.RootPath, languages, options.ScanOptions);
+
+        CountReportFormatter formatter = new();
+        string report = formatter.Format(results, options.OutputFormat);
+
+        if (!string.IsNullOrWhiteSpace(options.OutputPath))
+        {
+            string? outputDirectory = Path.GetDirectoryName(Path.GetFullPath(options.OutputPath));
+            if (!string.IsNullOrWhiteSpace(outputDirectory))
+            {
+                Directory.CreateDirectory(outputDirectory);
+            }
+
+            File.WriteAllText(options.OutputPath, report);
+        }
+        else
+        {
+            Console.WriteLine(report);
+        }
+
         return 0;
     }
 
@@ -63,25 +81,6 @@ internal static class Program
         return LanguageRegistry.All;
     }
 
-    private static void PrintResults(IReadOnlyList<LanguageCountResult> results)
-    {
-        Console.WriteLine("Language                 Files      Code  Comments     Blank     Total");
-        Console.WriteLine("-----------------------------------------------------------------------");
-
-        LineCountResult total = LineCountResult.Empty;
-
-        foreach (LanguageCountResult result in results.Where(result => result.Result.Files > 0))
-        {
-            total = total.Add(result.Result);
-            Console.WriteLine(
-                $"{result.Language.DisplayName,-22} {result.Result.Files,5} {result.Result.CodeLines,9} {result.Result.CommentLines,9} {result.Result.BlankLines,9} {result.Result.TotalLines,9}");
-        }
-
-        Console.WriteLine("-----------------------------------------------------------------------");
-        Console.WriteLine(
-            $"{"Total",-22} {total.Files,5} {total.CodeLines,9} {total.CommentLines,9} {total.BlankLines,9} {total.TotalLines,9}");
-    }
-
     private static void PrintUsage()
     {
         Console.WriteLine("Uso legacy:");
@@ -92,15 +91,32 @@ internal static class Program
         Console.WriteLine("  clsoc count . --lang csharp");
         Console.WriteLine("  clsoc count . --lang csharp,xml");
         Console.WriteLine("  clsoc count . --ext cs,xaml,xml");
+        Console.WriteLine("  clsoc count . --exclude bin,obj");
+        Console.WriteLine("  clsoc count . --no-default-excludes");
+        Console.WriteLine("  clsoc count . --format table");
+        Console.WriteLine("  clsoc count . --format json");
+        Console.WriteLine("  clsoc count . --format markdown");
+        Console.WriteLine("  clsoc count . --format csv");
+        Console.WriteLine("  clsoc count . --format json --output report.json");
     }
 
     private sealed class CountOptions
     {
-        private CountOptions(string rootPath, IReadOnlyList<string> languageIds, IReadOnlyList<string> extensions, bool showHelp)
+        private CountOptions(
+            string rootPath,
+            IReadOnlyList<string> languageIds,
+            IReadOnlyList<string> extensions,
+            FileScanOptions scanOptions,
+            ReportFormat outputFormat,
+            string? outputPath,
+            bool showHelp)
         {
             this.RootPath = rootPath;
             this.LanguageIds = languageIds;
             this.Extensions = extensions;
+            this.ScanOptions = scanOptions;
+            this.OutputFormat = outputFormat;
+            this.OutputPath = outputPath;
             this.ShowHelp = showHelp;
         }
 
@@ -110,6 +126,12 @@ internal static class Program
 
         public IReadOnlyList<string> Extensions { get; }
 
+        public FileScanOptions ScanOptions { get; }
+
+        public ReportFormat OutputFormat { get; }
+
+        public string? OutputPath { get; }
+
         public bool ShowHelp { get; }
 
         public static CountOptions Parse(string[] args)
@@ -118,6 +140,10 @@ internal static class Program
             List<string> languageIds = new();
             List<string> extensions = new();
             bool showHelp = false;
+            bool useDefaultExcludes = true;
+            List<string> excludedDirectoryNames = new();
+            ReportFormat outputFormat = ReportFormat.Table;
+            string? outputPath = null;
 
             int index = 0;
             if (index < args.Length && !args[index].StartsWith("--", StringComparison.Ordinal))
@@ -153,10 +179,49 @@ internal static class Program
                     continue;
                 }
 
+                if (string.Equals(option, "--exclude", StringComparison.OrdinalIgnoreCase) && value is not null)
+                {
+                    excludedDirectoryNames.AddRange(SplitList(value));
+                    index += 2;
+                    continue;
+                }
+
+                if (string.Equals(option, "--no-default-excludes", StringComparison.OrdinalIgnoreCase))
+                {
+                    useDefaultExcludes = false;
+                    index++;
+                    continue;
+                }
+
+                if (string.Equals(option, "--format", StringComparison.OrdinalIgnoreCase) && value is not null)
+                {
+                    if (ReportFormatParser.TryParse(value, out ReportFormat parsedFormat))
+                    {
+                        outputFormat = parsedFormat;
+                    }
+
+                    index += 2;
+                    continue;
+                }
+
+                if (string.Equals(option, "--output", StringComparison.OrdinalIgnoreCase) && value is not null)
+                {
+                    outputPath = value;
+                    index += 2;
+                    continue;
+                }
+
                 index++;
             }
 
-            return new CountOptions(rootPath, languageIds, extensions, showHelp);
+            return new CountOptions(
+                rootPath,
+                languageIds,
+                extensions,
+                new FileScanOptions(useDefaultExcludes, excludedDirectoryNames),
+                outputFormat,
+                outputPath,
+                showHelp);
         }
 
         private static IEnumerable<string> SplitList(string value)

@@ -33,6 +33,25 @@ public sealed class ProjectCounterTests : IDisposable
         Assert.Equal(1, xml.Result.CommentLines);
     }
 
+
+    [Fact]
+    public void CountByLanguage_ShouldRespectScanOptions()
+    {
+        WriteFile("Program.cs", "class Program", "{", "}");
+        WriteFile(Path.Combine("generated", "Generated.cs"), "class Generated", "{", "}");
+        ProjectCounter counter = new();
+        FileScanOptions options = new(useDefaultExcludes: true, excludedDirectoryNames: new[] { "generated" });
+
+        IReadOnlyList<LanguageCountResult> results = counter.CountByLanguage(
+            this.testRoot,
+            new[] { LanguageRegistry.CSharp },
+            options);
+
+        LanguageCountResult csharp = Assert.Single(results, result => result.Language.Id == "csharp");
+        Assert.Equal(1, csharp.Result.Files);
+        Assert.Equal(3, csharp.Result.CodeLines);
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(this.testRoot))
