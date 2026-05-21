@@ -1,3 +1,4 @@
+using clsoc;
 using Xunit;
 
 namespace clsoc.Tests;
@@ -108,6 +109,23 @@ public sealed class ContatoreTests : IDisposable
         string missingPath = Path.Combine(this.testRoot, "missing");
 
         Assert.Throws<DirectoryNotFoundException>(() => contatore.ConteggiaLinee("cs", missingPath));
+    }
+
+    [Fact]
+    public void ConteggiaLinee_WhenCalledTwice_ShouldResetPreviousCounts()
+    {
+        WriteFile("Program.cs", "class Program");
+        Contatore contatore = new();
+
+        contatore.ConteggiaLinee("cs", this.testRoot);
+        File.Delete(Path.Combine(this.testRoot, "Program.cs"));
+        contatore.ConteggiaLinee("cs", this.testRoot);
+
+        Assert.Equal(0, contatore.numberOfFile);
+        Assert.Equal(0, contatore.linesOfcodeTotal);
+        Assert.Equal(0, contatore.linesOfCode);
+        Assert.Equal(0, contatore.linesOfcodeEmpty);
+        Assert.Equal(0, contatore.linesOfcodeComment);
     }
 
     public void Dispose()
