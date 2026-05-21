@@ -66,3 +66,26 @@ Important properties:
 | `PackageVersion` | Defines the package version, currently `0.1.0`. |
 
 Before a public NuGet release, verify that the selected `PackageId` is available and decide whether the project should use a more unique id.
+
+## Publish as a single-file executable
+
+For a simple distributable executable under `artifacts`, use:
+
+```bash
+make publish
+```
+
+Current target:
+
+```text
+artifacts/publish/win-x64/clsoc.exe
+```
+
+The publish command uses:
+
+```bash
+dotnet publish clsoc/clsoc.csproj -c Release -r win-x64 --self-contained false /p:PublishSingleFile=true -o artifacts/publish/win-x64
+```
+
+This is a framework-dependent single-file publish: it produces one executable file, but the target machine must have the .NET 8 runtime installed.
+

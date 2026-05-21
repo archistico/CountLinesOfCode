@@ -1,4 +1,4 @@
-.PHONY: run build test check clean pack install-local uninstall-local tool z
+.PHONY: run build test check clean pack publish install-local uninstall-local tool z
 
 run:
 	dotnet run --project clsoc -- count .
@@ -25,6 +25,9 @@ check: build test
 
 pack:
 	dotnet pack clsoc/clsoc.csproj -c Release -o artifacts/packages
+
+publish:
+	dotnet publish clsoc/clsoc.csproj -c Release -r win-x64 --self-contained false /p:PublishSingleFile=true -o artifacts/publish/win-x64 /p:DebugType=None /p:DebugSymbols=false
 
 install-local: pack
 	dotnet tool install --global clsoc --add-source artifacts/packages

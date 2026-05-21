@@ -46,6 +46,23 @@ dotnet tool uninstall --global clsoc
 
 See also [`docs/packaging.md`](docs/packaging.md).
 
+
+## Publish a single-file executable
+
+You can create a framework-dependent single-file publish in `artifacts/publish/win-x64`:
+
+```bash
+make publish
+```
+
+This creates a single `clsoc.exe` file for Windows x64. The executable still requires the .NET 8 runtime to be installed on the target machine, because the publish is framework-dependent and not self-contained.
+
+Equivalent command:
+
+```bash
+dotnet publish clsoc/clsoc.csproj -c Release -r win-x64 --self-contained false /p:PublishSingleFile=true -o artifacts/publish/win-x64
+```
+
 ## Legacy usage
 
 The original command style is still supported:
