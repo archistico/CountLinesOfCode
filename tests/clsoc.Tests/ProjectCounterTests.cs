@@ -28,6 +28,9 @@ public sealed class ProjectCounterTests : IDisposable
         LanguageCountResult xml = Assert.Single(results, result => result.Language.Id == "xml");
         Assert.Equal(1, csharp.Result.Files);
         Assert.Equal(3, csharp.Result.CodeLines);
+        Assert.Single(csharp.FileResults);
+        Assert.Equal("Program.cs", Path.GetFileName(csharp.LargestFile!.FilePath));
+        Assert.Equal(3, csharp.LargestFile.Result.TotalLines);
         Assert.Equal(1, xml.Result.Files);
         Assert.Equal(1, xml.Result.CodeLines);
         Assert.Equal(1, xml.Result.CommentLines);
@@ -50,6 +53,24 @@ public sealed class ProjectCounterTests : IDisposable
         LanguageCountResult csharp = Assert.Single(results, result => result.Language.Id == "csharp");
         Assert.Equal(1, csharp.Result.Files);
         Assert.Equal(3, csharp.Result.CodeLines);
+    }
+
+    [Fact]
+    public void CountByLanguage_ShouldTrackLargestFileAndAverages()
+    {
+        WriteFile("Small.cs", "class Small");
+        WriteFile("Large.cs", "class Large", "{", "}", "// comment");
+        ProjectCounter counter = new();
+
+        IReadOnlyList<LanguageCountResult> results = counter.CountByLanguage(
+            this.testRoot,
+            new[] { LanguageRegistry.CSharp });
+
+        LanguageCountResult csharp = Assert.Single(results, result => result.Language.Id == "csharp");
+        Assert.Equal(2, csharp.FileResults.Count);
+        Assert.Equal("Large.cs", Path.GetFileName(csharp.LargestFile!.FilePath));
+        Assert.Equal(2.5, csharp.AverageLinesPerFile);
+        Assert.Equal(0.2, csharp.CommentRatio);
     }
 
     public void Dispose()

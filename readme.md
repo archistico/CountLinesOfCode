@@ -44,7 +44,7 @@ clsoc count . --format csv
 clsoc count . --format json --output report.json
 ```
 
-The output is grouped by language:
+The output is grouped by language and now includes a small metrics section:
 
 ```text
 Language                 Files      Code  Comments     Blank     Total
@@ -53,6 +53,14 @@ C#                           4       120        12        20       152
 XML/XAML                     2        35         3         6        44
 -----------------------------------------------------------------------
 Total                        6       155        15        26       196
+
+Metrics
+-------
+Comment ratio:          7.65 %
+Blank ratio:           13.27 %
+Code ratio:            79.08 %
+Average lines/file:     32.67
+Largest file:         src/Program.cs (98 lines)
 ```
 
 
@@ -93,7 +101,20 @@ clsoc count . --format csv --output report.csv
       "code": 120,
       "comments": 12,
       "blank": 20,
-      "total": 152
+      "total": 152,
+      "metrics": {
+        "codeRatio": 0.7895,
+        "commentRatio": 0.0789,
+        "blankRatio": 0.1316,
+        "averageLinesPerFile": 38,
+        "largestFile": {
+          "path": "src/Program.cs",
+          "total": 98,
+          "code": 82,
+          "comments": 6,
+          "blank": 10
+        }
+      }
     }
   ],
   "total": {
@@ -101,7 +122,20 @@ clsoc count . --format csv --output report.csv
     "code": 120,
     "comments": 12,
     "blank": 20,
-    "total": 152
+    "total": 152,
+    "metrics": {
+      "codeRatio": 0.7895,
+      "commentRatio": 0.0789,
+      "blankRatio": 0.1316,
+      "averageLinesPerFile": 38,
+      "largestFile": {
+        "path": "src/Program.cs",
+        "total": 98,
+        "code": 82,
+        "comments": 6,
+        "blank": 10
+      }
+    }
   }
 }
 ```
@@ -113,6 +147,14 @@ clsoc count . --format csv --output report.csv
 |---|---:|---:|---:|---:|---:|
 | C# | 4 | 120 | 12 | 20 | 152 |
 | **Total** | **4** | **120** | **12** | **20** | **152** |
+
+## Metrics
+
+- Comment ratio: 7.89 %
+- Blank ratio: 13.16 %
+- Code ratio: 78.95 %
+- Average lines/file: 38
+- Largest file: src/Program.cs (98 lines)
 ```
 
 ## Default excluded directories
@@ -171,6 +213,7 @@ src/
       Contatore.cs
       FileScanOptions.cs
       FileScanner.cs
+      FileCountResult.cs
       LanguageCountResult.cs
       LanguageDefinition.cs
       LanguageRegistry.cs
@@ -207,5 +250,6 @@ Mixed code/comment lines are still counted as code lines, preserving the current
 - [x] Add language definitions and grouped language counting
 - [x] Add default excluded directories such as `bin`, `obj`, `.git`, `.vs`, `node_modules`
 - [x] Add output formats: table, JSON, Markdown, CSV
+- [x] Add summary metrics: ratios, average lines per file and largest file
 - [ ] Add optional configuration file `clsoc.json`
 - [ ] Package as a .NET global tool

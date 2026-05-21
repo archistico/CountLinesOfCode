@@ -36,13 +36,16 @@ public sealed class ProjectCounter
         {
             IReadOnlyList<string> files = this.fileScanner.FindFiles(rootPath, language.Extensions, scanOptions);
             LineCountResult summary = LineCountResult.Empty;
+            List<FileCountResult> fileResults = new();
 
             foreach (string file in files)
             {
-                summary = summary.Add(this.lineCounter.CountFile(file, language));
+                LineCountResult fileResult = this.lineCounter.CountFile(file, language);
+                summary = summary.Add(fileResult);
+                fileResults.Add(new FileCountResult(file, fileResult));
             }
 
-            results.Add(new LanguageCountResult(language, summary));
+            results.Add(new LanguageCountResult(language, summary, fileResults));
         }
 
         return results;

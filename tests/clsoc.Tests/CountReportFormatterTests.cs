@@ -17,6 +17,9 @@ public sealed class CountReportFormatterTests
         Assert.Contains("C#", report);
         Assert.Contains("XML/XAML", report);
         Assert.Contains("Total", report);
+        Assert.Contains("Metrics", report);
+        Assert.Contains("Comment ratio", report);
+        Assert.Contains("Largest file", report);
         Assert.Contains("     2", report);
     }
 
@@ -32,6 +35,8 @@ public sealed class CountReportFormatterTests
         Assert.Equal(2, root.GetProperty("languages").GetArrayLength());
         Assert.Equal(3, root.GetProperty("total").GetProperty("files").GetInt32());
         Assert.Equal(14, root.GetProperty("total").GetProperty("code").GetInt32());
+        Assert.Equal(0.1905, root.GetProperty("total").GetProperty("metrics").GetProperty("commentRatio").GetDouble());
+        Assert.Equal("src/Program.cs", root.GetProperty("total").GetProperty("metrics").GetProperty("largestFile").GetProperty("path").GetString());
     }
 
     [Fact]
@@ -44,6 +49,8 @@ public sealed class CountReportFormatterTests
         Assert.Contains("| Language | Files | Code | Comments | Blank | Total |", report);
         Assert.Contains("| C# | 2 | 10 | 3 | 2 | 15 |", report);
         Assert.Contains("| **Total** | **3** | **14** | **4** | **3** | **21** |", report);
+        Assert.Contains("## Metrics", report);
+        Assert.Contains("- Average lines/file: 7", report);
     }
 
     [Fact]
@@ -56,6 +63,8 @@ public sealed class CountReportFormatterTests
         Assert.Contains("Language,Files,Code,Comments,Blank,Total", report);
         Assert.Contains("C#,2,10,3,2,15", report);
         Assert.Contains("Total,3,14,4,3,21", report);
+        Assert.Contains("Metric,Value", report);
+        Assert.Contains("Code ratio,66.67 %", report);
     }
 
     [Fact]
@@ -95,8 +104,21 @@ public sealed class CountReportFormatterTests
     {
         return new[]
         {
-            new LanguageCountResult(LanguageRegistry.CSharp, new LineCountResult(2, 15, 10, 2, 3)),
-            new LanguageCountResult(LanguageRegistry.Xml, new LineCountResult(1, 6, 4, 1, 1))
+            new LanguageCountResult(
+                LanguageRegistry.CSharp,
+                new LineCountResult(2, 15, 10, 2, 3),
+                new[]
+                {
+                    new FileCountResult("src/Program.cs", new LineCountResult(1, 10, 7, 1, 2)),
+                    new FileCountResult("src/Other.cs", new LineCountResult(1, 5, 3, 1, 1))
+                }),
+            new LanguageCountResult(
+                LanguageRegistry.Xml,
+                new LineCountResult(1, 6, 4, 1, 1),
+                new[]
+                {
+                    new FileCountResult("View.xaml", new LineCountResult(1, 6, 4, 1, 1))
+                })
         };
     }
 }
