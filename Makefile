@@ -1,4 +1,4 @@
-.PHONY: run build test check clean zip z
+.PHONY: run build test check clean pack install-local uninstall-local tool z
 
 run:
 	dotnet run --project clsoc -- count .
@@ -23,13 +23,27 @@ test:
 
 check: build test
 
+pack:
+	dotnet pack clsoc/clsoc.csproj -c Release -o artifacts/packages
+
+install-local: pack
+	dotnet tool install --global clsoc --add-source artifacts/packages
+
+uninstall-local:
+	dotnet tool uninstall --global clsoc
+
+tool:
+	clsoc count .
+
 clean:
-	@echo "Removing bin and obj folders..."
+	@echo "Removing bin, obj and generated artifact folders..."
 ifeq ($(OS),Windows_NT)
 	@if exist clsoc for /d /r clsoc %%d in (bin,obj) do @if exist "%%d" rmdir /s /q "%%d"
+	@if exist src for /d /r src %%d in (bin,obj) do @if exist "%%d" rmdir /s /q "%%d"
 	@if exist tests for /d /r tests %%d in (bin,obj) do @if exist "%%d" rmdir /s /q "%%d"
+	@if exist artifacts rmdir /s /q artifacts
 else
-	find src tests -type d \( -name bin -o -name obj \) -prune -exec rm -rf {} +
+	find clsoc src tests -type d \( -name bin -o -name obj \) -prune -exec rm -rf {} +
+	rm -rf artifacts
 endif
 	@echo "Clean completed."
-

@@ -16,6 +16,36 @@ dotnet build clsoc.sln
 dotnet test clsoc.sln
 ```
 
+## Package as a .NET tool
+
+The CLI project is now packable as a .NET global tool.
+
+Create the package:
+
+```bash
+dotnet pack clsoc/clsoc.csproj -c Release -o artifacts/packages
+```
+
+Install it from the local package folder:
+
+```bash
+dotnet tool install --global clsoc --add-source artifacts/packages
+```
+
+Then run it from any folder:
+
+```bash
+clsoc count .
+```
+
+Uninstall it with:
+
+```bash
+dotnet tool uninstall --global clsoc
+```
+
+See also [`docs/packaging.md`](docs/packaging.md).
+
 ## Legacy usage
 
 The original command style is still supported:
@@ -284,6 +314,9 @@ tests/
     ProjectCounterTests.cs
     CountConfigurationLoaderTests.cs
     CountReportFormatterTests.cs
+
+docs/
+  packaging.md
 ```
 
 ## Notes
@@ -303,4 +336,5 @@ Mixed code/comment lines are still counted as code lines, preserving the current
 - [x] Add output formats: table, JSON, Markdown, CSV
 - [x] Add summary metrics: ratios, average lines per file and largest file
 - [x] Add optional configuration file `clsoc.json`
-- [ ] Package as a .NET global tool
+- [x] Package as a .NET global tool
+- [ ] Add release workflow / CI packaging

@@ -6,7 +6,19 @@
     <Nullable>enable</Nullable>
     <RootNamespace>clsoc</RootNamespace>
     <AssemblyName>clsoc</AssemblyName>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>clsoc</ToolCommandName>
+    <PackageId>clsoc</PackageId>
+    <PackageVersion>0.1.0</PackageVersion>
+    <Authors>Emilie Rollandin</Authors>
+    <Description>A small cross-platform CLI tool for counting source lines of code.</Description>
+    <PackageTags>cli;source-code;lines-of-code;metrics</PackageTags>
+    <PackageProjectUrl>https://github.com/archistico/CountLinesOfCode</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/archistico/CountLinesOfCode</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>readme.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,5 +28,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\src\clsoc.Core\clsoc.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\readme.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 </Project>
