@@ -1,20 +1,18 @@
-﻿using System;
+namespace clsoc;
 
-namespace clsoc
+internal static class Program
 {
-	class MainClass
-	{
-		public static void Main(string[] args)
-		{
-			if (args.Length < 1)
-			{
-				System.Console.WriteLine("Inserire l'estensione dei file da analizzare");
-				System.Console.WriteLine("Esempio: ./clsoc.exe txt");
-				Environment.Exit(1);
-			}
+    public static int Main(string[] args)
+    {
+        if (args.Length < 1)
+        {
+            Console.WriteLine("Inserire l'estensione dei file da analizzare");
+            Console.WriteLine("Esempio: clsoc.exe cs");
+            return 1;
+        }
 
-			Contatore cont = new Contatore();
-			cont.Conteggia((string)args[0]);
-		}
-	}
+        Contatore contatore = new();
+        contatore.Conteggia(args[0]);
+        return 0;
+    }
 }
